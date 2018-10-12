@@ -2,7 +2,7 @@ import argparse
 
 def args():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-    parser.add_argument('--instance', default='resnet', type=str, help='instance name')
+    parser.add_argument('--instance', default=None, type=str, help='instance name')
 
     parser.add_argument('--arch', default='ResNet18', type=str, help='type of network')
     parser.add_argument('--optim', default='sgd', type=str, help='optimizer')

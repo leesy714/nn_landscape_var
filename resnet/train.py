@@ -19,6 +19,8 @@ from args import args
 from utils import progress_bar
 
 args = args()
+if args.instance is None:
+    args.instance = '{}_optim_{}_lr_{}_batch-size_{}_seed_{}'.format(args.arch, args.optim, args.lr, args.batch_size, args.seed)
 torch.manual_seed(args.seed)
 
 print('==> Preparing data..')
@@ -45,10 +47,12 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 print('==> Building model..')
 if args.arch == 'ResNet18':
     net = ResNet18()
+    print('Model : ResNet18')
 elif args.arch == 'ResNetNoShort18':
     net = ResNetNoShort18()
+    print('Model : ResNetNoShort18')
 
-print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+print('Parameter:',sum(p.numel() for p in net.parameters() if p.requires_grad))
 net = net.to(args.device)
 if args.device == 'cuda':
     net = torch.nn.DataParallel(net)
