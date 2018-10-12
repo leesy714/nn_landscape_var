@@ -14,7 +14,7 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
 
-from resnet import ResNet18
+from resnet import ResNet18, ResNetNoShort18
 from args import args
 from utils import progress_bar
 
@@ -43,7 +43,10 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 print('==> Building model..')
-net = ResNet18()
+if args.arch == 'ResNet18':
+    net = ResNet18()
+elif args.arch == 'ResNetNoShort18':
+    net = ResNetNoShort18()
 
 print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 net = net.to(args.device)

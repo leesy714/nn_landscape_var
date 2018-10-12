@@ -4,7 +4,7 @@ def args():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
     parser.add_argument('--instance', default='resnet', type=str, help='instance name')
 
-
+    parser.add_argument('--arch', default='ResNet18', type=str, help='type of network')
     parser.add_argument('--optim', default='sgd', type=str, help='optimizer')
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
     parser.add_argument('--lr-change', default = 30, type=float, help='term for dividing lr by 10')
