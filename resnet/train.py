@@ -14,13 +14,15 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
 
-from resnet import ResNet18, ResNetNoShort18
+from resnet import ResNet56, ResNetNoShort56,ResNet110, ResNetNoShort110
+
 from args import args
 from utils import progress_bar
 
 args = args()
 if args.instance is None:
     args.instance = '{}_optim_{}_lr_{}_batch-size_{}_seed_{}'.format(args.arch, args.optim, args.lr, args.batch_size, args.seed)
+print(args.instance)
 torch.manual_seed(args.seed)
 
 print('==> Preparing data..')
@@ -45,12 +47,17 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 print('==> Building model..')
-if args.arch == 'ResNet18':
-    net = ResNet18()
-    print('Model : ResNet18')
-elif args.arch == 'ResNetNoShort18':
-    net = ResNetNoShort18()
-    print('Model : ResNetNoShort18')
+if args.arch == 'ResNet56':
+    net = ResNet56()
+elif args.arch == 'ResNetNoShort56':
+    net = ResNetNoShort56()
+if args.arch == 'ResNet110':
+    net = ResNet110()
+elif args.arch == 'ResNetNoShort110':
+    net = ResNetNoShort110()
+
+
+
 
 print('Parameter:',sum(p.numel() for p in net.parameters() if p.requires_grad))
 net = net.to(args.device)
@@ -67,6 +74,17 @@ else:
 
 
 start_epoch = 0
+
+print('Saving initial point..')
+state = {
+    'net': net.state_dict(),
+    'acc': -1,
+    'epoch': -1,
+}
+if not os.path.isdir('checkpoint'):
+    os.mkdir('checkpoint')
+torch.save(state, './checkpoint/{}_init.t7'.format(args.instance))
+
 
 def train(epoch):
     print('\nEpoch: %d' % epoch)

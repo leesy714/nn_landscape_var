@@ -40,6 +40,7 @@ class BasicBlock(nn.Module):
         #out = self.conv2(out)
         out += self.shortcut(x)
         out = F.relu(out)
+
         return out
 
     def get_weight_vector(self):
@@ -147,15 +148,15 @@ class BasicBlockNoShort(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10):
         super(ResNet, self).__init__()
-        self.in_planes = 64
+        self.in_planes = 16
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.linear = nn.Linear(512*block.expansion, num_classes)
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
+        self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
+        self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
+        #self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+        self.linear = nn.Linear(64*block.expansion, num_classes)
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -171,8 +172,8 @@ class ResNet(nn.Module):
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
+        #out = self.layer4(out)
+        out = F.avg_pool2d(out, 8)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         return out
@@ -190,9 +191,9 @@ class ResNet(nn.Module):
         for i, layer in self.layer3.named_children():
             if isinstance(layer, BasicBlock):
                 wv.append(layer.get_weight_vector())
-        for i, layer in self.layer4.named_children():
-            if isinstance(layer, BasicBlock):
-                wv.append(layer.get_weight_vector())
+        #for i, layer in self.layer4.named_children():
+        #    if isinstance(layer, BasicBlock):
+        #        wv.append(layer.get_weight_vector())
         linear_w = self.linear.weight.data.cpu().numpy().flatten()
         linear_b = self.linear.bias.data.cpu().numpy().flatten()
         wv.append(linear_w)
@@ -222,12 +223,12 @@ class ResNet(nn.Module):
                 w = vector[n : n + length]
                 layer.set_weight_vector(w)
                 n += length
-        for i, layer in self.layer4.named_children():
-            if isinstance(layer, BasicBlock):
-                length = layer.get_weight_vector_size()
-                w = vector[n : n + length]
-                layer.set_weight_vector(w)
-                n += length
+        #for i, layer in self.layer4.named_children():
+        #    if isinstance(layer, BasicBlock):
+        #        length = layer.get_weight_vector_size()
+        #        w = vector[n : n + length]
+        #        layer.set_weight_vector(w)
+        #        n += length
 
         length = self.linear.weight.size(0)  * self.linear.weight.size(1) 
         length2 = self.linear.bias.size(0) 
@@ -269,14 +270,14 @@ class ResNet(nn.Module):
 
                 w_norm = layer.filterwisely_normalize(w)
                 wv.append(w_norm)
-        for i, layer in self.layer4.named_children():
-            if isinstance(layer, BasicBlock):
-                length = layer.get_weight_vector_size()
-                w = vector[n : n + length]
-                n += length
+        #for i, layer in self.layer4.named_children():
+        #    if isinstance(layer, BasicBlock):
+        #        length = layer.get_weight_vector_size()
+        #        w = vector[n : n + length]
+        #        n += length
 
-                w_norm = layer.filterwisely_normalize(w)
-                wv.append(w_norm)
+        #        w_norm = layer.filterwisely_normalize(w)
+        #        wv.append(w_norm)
 
         length = self.linear.weight.size(0)  * self.linear.weight.size(1) 
         length2 = self.linear.bias.size(0) 
@@ -322,17 +323,17 @@ def conv_filter_normalize(layer, vector):
 
 
 
-def ResNet18():
-    return ResNet(BasicBlock, [2,2,2,2])
+def ResNet56():
+    return ResNet(BasicBlock, [9,9,9])
 
-def ResNetNoShort18():
-    return ResNet(BasicBlockNoShort, [2,2,2,2])
+def ResNetNoShort56():
+    return ResNet(BasicBlockNoShort, [9,9,9])
 
 
-def ResNet34():
-    return ResNet(BasicBlock, [3,4,6,3])
-def ResNetNoShort34():
-    return ResNet(BasicBlockNoShort, [3,4,6,3])
+def ResNet110():
+    return ResNet(BasicBlock, [18,18,18])
+def ResNetNoShort110():
+    return ResNet(BasicBlockNoShort, [18,18,18])
 
 '''
 def ResNet50():
@@ -356,5 +357,5 @@ def test():
 
 
 
-test()
+#test()
 
