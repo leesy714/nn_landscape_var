@@ -2,15 +2,22 @@ import os
 import torch
 import torch.nn as nn
 import torchvision
+import numpy as np
 from torchvision import datasets, transforms
+
+import tensorflow as tf
 
 from model import Model
 from utils import progress_bar
 from args import args
+import visdom 
 
 
 args = args()
 torch.manual_seed(args.seed)
+if args.visdom:
+    vis = visdom.Visdom()
+
 if args.instance is None:
     args.instance = 'data_{}_optim_{}_lr_{}_wd_{}_batch-size_{}_seed_{}'.format(args.dataset,args.optim, args.lr,args.weight_decay, args.batch_size, args.seed)
 print(args.instance)
@@ -37,6 +44,9 @@ def train(epoch, net, loader, optim, loss_function):
         correct += predicted.eq(targets_d).sum().item()
         progress_bar(i, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 % (train_loss/(i+1), 100.*correct/total, correct, total))
+    train_loss /= len(loader)
+    acc = correct / total * 100
+    return train_loss, acc
 
 def test(epoch, net, loader, loss_function):
     global best_acc
@@ -60,12 +70,15 @@ def test(epoch, net, loader, loss_function):
                 % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
     # Save checkpoint.
+    test_loss /= len(loader)
     acc = 100.*correct/total
     tag = 'epoch_{}_loss_{:.4f}_acc_{:.2f}'.format(epoch, test_loss, acc)
     if acc > best_acc:
         best_acc = acc
         save_checkpoint(net, acc, epoch,tag='best' )
     save_checkpoint(net, acc, epoch,tag=tag)
+
+    return test_loss, acc
  
 def save_checkpoint(net, acc, epoch, tag=None):
     print('Saving..')
@@ -82,6 +95,8 @@ def save_checkpoint(net, acc, epoch, tag=None):
         filename = 'test' 
     else:
         filename = tag 
+    if tag=='best':
+        os.system('rm ./checkpoint/{}/best.t7'.format(args.instance))
     torch.save(state, './checkpoint/{}/{}.t7'.format(args.instance, filename))
 
 def adjust_learning_rate(optimizer, epoch):
@@ -136,9 +151,26 @@ def main():
         optim = torch.optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     else:
         raise NotImplementedError
+    if vis:
+        loss_win, acc_win = None, None
     for i in range(epoch):
         adjust_learning_rate(optim, i)
-        train(i, net, trainloader, optim, loss_function)
-        test(i, net, testloader, loss_function)
+        train_loss, train_acc = train(i, net, trainloader, optim, loss_function)
+        test_loss, test_acc = test(i, net, testloader, loss_function)
+        if vis:
+            loss_win, acc_win = visdom_plot(i, train_loss, test_loss, train_acc, test_acc, loss_win,acc_win )
+
+
+def visdom_plot(epoch, train_loss,test_loss, train_acc, test_acc,  loss_win, acc_win):
+    x = np.column_stack((np.arange(epoch, epoch+1), np.arange(epoch, epoch+1)))
+    y = np.array([[train_loss, test_loss]])
+    z = np.array([[train_acc, test_acc]])
+    if loss_win is None:
+        loss_win = vis.line(X=x,Y=y,opts=dict(title=args.instance, legend=['train','test']))
+        acc_win = vis.line(X=x,Y=z,opts=dict(title=args.instance, legend=['train','test']))
+    else:
+        loss_win = vis.line(X=x,Y=y, update='append', win=loss_win,opts=dict(title=args.instance, legend=['train','test']))
+        acc_win = vis.line(X=x,Y=z, update='append', win=acc_win,opts=dict(title=args.instance, legend=['train','test']))
+    return loss_win, acc_win
 
 main()
