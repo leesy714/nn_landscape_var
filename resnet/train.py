@@ -14,7 +14,7 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
 
-from resnet import ResNet56, ResNetNoShort56,ResNet110, ResNetNoShort110
+from resnet import ResNet56, ResNetNoShort56,ResNet110, ResNetNoShort110, ResNet20, ResNetNoShort20
 
 from args import args
 from utils import progress_bar
@@ -47,6 +47,11 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 print('==> Building model..')
+if args.arch == 'ResNet20':
+    net = ResNet20()
+elif args.arch == 'ResNetNoShort20':
+    net = ResNetNoShort20()
+
 if args.arch == 'ResNet56':
     net = ResNet56()
 elif args.arch == 'ResNetNoShort56':
@@ -144,7 +149,14 @@ def test(epoch):
         best_acc = acc
 def adjust_learning_rate(optimizer, epoch):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = args.lr * (0.1 ** (epoch // args.lr_change))
+    #lr = args.lr * (0.1 ** (epoch // args.lr_change))
+    lr = args.lr
+    if epoch == 150: 
+        lr = args.lr * 0.1
+    elif epoch == 225:
+        lr = args.lr * 0.01
+    elif epoch == 275:
+        lr = args.lr * 0.001
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 

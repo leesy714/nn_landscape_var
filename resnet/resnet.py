@@ -321,7 +321,11 @@ def conv_filter_normalize(layer, vector):
 
 
 
+def ResNet20():
+    return ResNet(BasicBlock, [3,3,3])
 
+def ResNetNoShort20():
+    return ResNet(BasicBlockNoShort, [3,3,3])
 
 def ResNet56():
     return ResNet(BasicBlock, [9,9,9])
