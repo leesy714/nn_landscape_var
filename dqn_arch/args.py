@@ -13,6 +13,8 @@ def args():
 
     parser.add_argument('--device', default='cuda:0', type=str, help='device')
     parser.add_argument('--seed', default=2018, type=int, help='seed')
+
+    parser.add_argument('--visdom',action='store_true', default=False, help='visdom learning curve plot')
     
     args = parser.parse_args()
     return args
