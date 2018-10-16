@@ -51,7 +51,6 @@ class BasicBlock(nn.Module):
         if isinstance(self.shortcut, nn.Conv2d):
             shortcut_w = self.shortcut.weight.data.cpu().numpy().flatten()
             w = np.concatenate((w, shortcut_w))
-
         return w
 
     def get_weight_vector_size(self):
@@ -183,13 +182,13 @@ class ResNet(nn.Module):
         conv1_w = self.conv1.weight.data.cpu().numpy().flatten()
         wv = [conv1_w]
         for i, layer in self.layer1.named_children():
-            if isinstance(layer, BasicBlock):
+            if isinstance(layer, BasicBlock) or isinstance(layer, BasicBlockNoShort):
                 wv.append(layer.get_weight_vector())
         for i, layer in self.layer2.named_children():
-            if isinstance(layer, BasicBlock):
+            if isinstance(layer, BasicBlock) or isinstance(layer, BasicBlockNoShort):
                 wv.append(layer.get_weight_vector())
         for i, layer in self.layer3.named_children():
-            if isinstance(layer, BasicBlock):
+            if isinstance(layer, BasicBlock)  or isinstance(layer, BasicBlockNoShort):
                 wv.append(layer.get_weight_vector())
         #for i, layer in self.layer4.named_children():
         #    if isinstance(layer, BasicBlock):
@@ -206,19 +205,19 @@ class ResNet(nn.Module):
         w1 = vector[:n].reshape(self.conv1.weight.size())
         self.conv1.weight = Parameter(torch.Tensor(w1).to('cuda'))
         for i, layer in self.layer1.named_children():
-            if isinstance(layer, BasicBlock):
+            if isinstance(layer, BasicBlock) or isinstance(layer, BasicBlockNoShort):
                 length = layer.get_weight_vector_size()
                 w = vector[n : n + length]
                 layer.set_weight_vector(w)
                 n += length
         for i, layer in self.layer2.named_children():
-            if isinstance(layer, BasicBlock):
+            if isinstance(layer, BasicBlock) or isinstance(layer, BasicBlockNoShort):
                 length = layer.get_weight_vector_size()
                 w = vector[n : n + length]
                 layer.set_weight_vector(w)
                 n += length
         for i, layer in self.layer3.named_children():
-            if isinstance(layer, BasicBlock):
+            if isinstance(layer, BasicBlock) or isinstance(layer, BasicBlockNoShort):
                 length = layer.get_weight_vector_size()
                 w = vector[n : n + length]
                 layer.set_weight_vector(w)
@@ -247,7 +246,7 @@ class ResNet(nn.Module):
         wv.append(w1_norm)
 
         for i, layer in self.layer1.named_children():
-            if isinstance(layer, BasicBlock):
+            if isinstance(layer, BasicBlock) or isinstance(layer, BasicBlockNoShort):
                 length = layer.get_weight_vector_size()
                 w = vector[n : n + length]
                 n += length
@@ -255,7 +254,7 @@ class ResNet(nn.Module):
                 w_norm = layer.filterwisely_normalize(w)
                 wv.append(w_norm)
         for i, layer in self.layer2.named_children():
-            if isinstance(layer, BasicBlock):
+            if isinstance(layer, BasicBlock) or isinstance(layer, BasicBlockNoShort):
                 length = layer.get_weight_vector_size()
                 w = vector[n : n + length]
                 n += length
@@ -263,7 +262,7 @@ class ResNet(nn.Module):
                 w_norm = layer.filterwisely_normalize(w)
                 wv.append(w_norm)
         for i, layer in self.layer3.named_children():
-            if isinstance(layer, BasicBlock):
+            if isinstance(layer, BasicBlock) or isinstance(layer, BasicBlockNoShort):
                 length = layer.get_weight_vector_size()
                 w = vector[n : n + length]
                 n += length
