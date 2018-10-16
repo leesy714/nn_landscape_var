@@ -7,6 +7,7 @@ def args():
 
     parser.add_argument('--optim', default='sgd', type=str, help='optimizer')
     parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
+    parser.add_argument('--weight_decay', default=5e-4, type=float, help='l2 regularization')
     parser.add_argument('--epoch', default=100, type=int, help='epoch')
     parser.add_argument('--batch-size', default=128, type=int, help='batch size')
 

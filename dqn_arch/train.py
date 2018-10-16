@@ -11,6 +11,9 @@ from args import args
 
 args = args()
 torch.manual_seed(args.seed)
+if args.instance is None:
+    args.instance = 'data_{}_optim_{}_lr_{}_wd_{}_batch-size_{}_seed_{}'.format(args.dataset,args.optim, args.lr,args.weight_decay, args.batch_size, args.seed)
+print(args.instance)
 
 best_acc = 0.0
 def train(epoch, net, loader, optim, loss_function):
@@ -58,11 +61,13 @@ def test(epoch, net, loader, loss_function):
 
     # Save checkpoint.
     acc = 100.*correct/total
+    tag = 'epoch_{}_loss_{:.4f}_acc_{:.2f}'.format(epoch, test_loss, acc)
     if acc > best_acc:
         best_acc = acc
-        save_checkpoint(net, acc, epoch)
+        save_checkpoint(net, acc, epoch,tag='best' )
+    save_checkpoint(net, acc, epoch,tag=tag)
  
-def save_checkpoint(net, acc, epoch):
+def save_checkpoint(net, acc, epoch, tag=None):
     print('Saving..')
     state = {
         'net': net.state_dict(),
@@ -71,7 +76,13 @@ def save_checkpoint(net, acc, epoch):
     }
     if not os.path.isdir('checkpoint'):
         os.mkdir('checkpoint')
-    torch.save(state, './checkpoint/{}.t7'.format(args.instance))
+    if not os.path.isdir('checkpoint/{}'.format(args.instance)):
+        os.mkdir('checkpoint/{}'.format(args.instance))
+    if tag is None:
+        filename = 'test' 
+    else:
+        filename = tag 
+    torch.save(state, './checkpoint/{}/{}.t7'.format(args.instance, filename))
 
 def adjust_learning_rate(optimizer, epoch):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
@@ -110,6 +121,8 @@ def main():
                 transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.1307,), (0.3081,))])),
                 batch_size=args.batch_size, shuffle=True, num_workers=2)
         data_size = (1,28,28)
+    else:
+        raise NotImplementedError
 
 
     net = Model(in_size=data_size).to(args.device)
@@ -117,7 +130,12 @@ def main():
     epoch=args.epoch
 
     loss_function = nn.CrossEntropyLoss()
-    optim = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    if args.optim == 'sgd':
+        optim = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.weight_decay)
+    elif args.optim == 'adam':
+        optim = torch.optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    else:
+        raise NotImplementedError
     for i in range(epoch):
         adjust_learning_rate(optim, i)
         train(i, net, trainloader, optim, loss_function)
