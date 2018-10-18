@@ -83,7 +83,31 @@ class Model(nn.Module):
         w2_norm = conv_filter_normalize(self.conv2, w2)
         w3_norm = conv_filter_normalize(self.conv3, w3)
         w = np.concatenate([w1_norm, w2_norm, w3_norm])
-        w_rest = vector[n1+n2+n3:]
+
+        
+        n4 = self.dense.weight.size(0) * self.dense.weight.size(1)
+
+        n5_w = self.out.weight.size(0) * self.out.weight.size(1)
+        n5_b = self.out.bias.size(0)
+
+        w4 = vector[n1+n2+n3 : n1+n2+n3+n4]
+        w4_norm = np.linalg.norm(w4)
+        layer_norm_4 = np.linalg.norm(self.dense.weight.data.cpu().numpy())
+        w4_norm = w4 / w4_norm * layer_norm_4
+        
+        w5 = vector[n1+n2+n3+n4 : n1+n2+n3+n4+n5_w]
+        w5_norm = np.linalg.norm(w5)
+        layer_norm_5 = np.linalg.norm(self.out.weight.data.cpu().numpy())
+        w5_norm = w5 / w5_norm * layer_norm_5
+        
+        b5 = vector[n1+n2+n3+n4+n5_w : ]
+        b5_norm = np.linalg.norm(b5)
+        layer_norm_5 = np.linalg.norm(self.out.bias.data.cpu().numpy())
+        b5_norm = b5 / b5_norm * layer_norm_5
+        
+        
+        w_rest = np.concatenate([w4_norm, w5_norm, b5_norm])
+        
         return np.concatenate([w,w_rest])
 
  
