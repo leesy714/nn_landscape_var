@@ -134,8 +134,9 @@ def main():
             if args.cuda:
                 save_model = copy.deepcopy(actor_critic).cpu()
 
-            save_model = [save_model,
+            save_model = [save_model.state_dict(),
                           getattr(get_vec_normalize(envs), 'ob_rms', None)]
+
 
             torch.save(save_model, os.path.join(save_path, args.env_name + ".pt"))
 
