@@ -15,11 +15,12 @@ import visdom
 
 args = args()
 torch.manual_seed(args.seed)
-if args.visdom:
-    vis = visdom.Visdom()
-
 if args.instance is None:
-    args.instance = 'data_{}_optim_{}_lr_{}_wd_{}_batch-size_{}_seed_{}'.format(args.dataset,args.optim, args.lr,args.weight_decay, args.batch_size, args.seed)
+    args.instance = 'data_{}_optim_{}_lr_{}_ld_{}_wd_{}_batch-size_{}_seed_{}'.format(args.dataset,args.optim, args.lr,args.lr_decay_interval, args.weight_decay, args.batch_size, args.seed)
+
+if args.visdom:
+    vis = visdom.Visdom(env=args.instance)
+
 print(args.instance)
 
 best_acc = 0.0
@@ -75,8 +76,9 @@ def test(epoch, net, loader, loss_function):
     tag = 'epoch_{}_loss_{:.4f}_acc_{:.2f}'.format(epoch, test_loss, acc)
     if acc > best_acc:
         best_acc = acc
-        save_checkpoint(net, acc, epoch,tag='best' )
-    save_checkpoint(net, acc, epoch,tag=tag)
+        save_checkpoint(net, acc, epoch,tag='best_'+tag )
+    if epoch % args.checkpoint_interval == 0:
+        save_checkpoint(net, acc, epoch,tag=tag)
 
     return test_loss, acc
  
@@ -95,13 +97,13 @@ def save_checkpoint(net, acc, epoch, tag=None):
         filename = 'test' 
     else:
         filename = tag 
-    if tag=='best':
-        os.system('rm ./checkpoint/{}/best.t7'.format(args.instance))
+    if 'best' in tag:
+        os.system('rm ./checkpoint/{}/best_*.t7'.format(args.instance))
     torch.save(state, './checkpoint/{}/{}.t7'.format(args.instance, filename))
 
 def adjust_learning_rate(optimizer, epoch):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = args.lr * (0.1 ** (epoch // 30))
+    lr = args.lr * (0.1 ** (epoch // args.lr_decay_interval))
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
