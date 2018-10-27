@@ -212,8 +212,6 @@ class CNNBase(NNBase):
 
         w = [conv1_w, conv2_w, conv3_w, dense_w, critic_w, critic_b]
         w= np.concatenate(w)
-        print(w.shape)
-        print(sum(p.numel() for p in self.parameters()))
         return w
 
     def set_weight_vector(self,vector,device):
