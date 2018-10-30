@@ -19,7 +19,7 @@ def evaluate(env_name, filename, seed = 1,add_timestep=False,det = True):
         base_kwargs = {'recurrent':False})
     #print(state_dict)
     actor_critic.load_state_dict(state_dict)
-    recurrent_hidden_states = torch.zeros(1, actor_critic.recurrent_hidden_state_size)
+    recurrent_hidden_states = torch.zeros(1, 1)
     masks = torch.zeros(1, 1)
     obs = env.reset()
     total_r = 0.0
@@ -36,7 +36,7 @@ def evaluate(env_name, filename, seed = 1,add_timestep=False,det = True):
     return total_r.data.item()
 
 def evaluate_net(net, env, seed=1,max_iter=3000, det=True):
-    recurrent_hidden_states = torch.zeros(1, net.recurrent_hidden_state_size)
+    recurrent_hidden_states = torch.zeros(1, 1)
     masks = torch.zeros(1, 1)
     obs = env.reset()
     total_r = 0.0
